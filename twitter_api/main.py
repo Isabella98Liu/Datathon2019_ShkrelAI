@@ -2,6 +2,10 @@
 
 import twitter
 import nltk
+import datetime
+import csv
+
+from nltk.sentiment import *
 
 # Returned timeline is a dictionary of the following fields
 # 
@@ -25,212 +29,6 @@ def get_tweets(api=None, screen_name=None):
 
     return timeline
 
-positive_adjectives = [
-"adaptable"
-"adventurous"
-"affable"
-"affectionate"
-"agreeable"
-"ambitious"
-"amiable"
-"amicable"
-"amusing"
-"brave"
-"bright"
-"broad-minded"
-"calm"
-"careful"
-"charming"
-"communicative"
-"compassionate"
-"conscientious"
-"considerate"
-"convivial"
-"courageous"
-"courteous"
-"creative"
-"decisive"
-"determined"
-"diligent"
-"diplomatic"
-"discreet"
-"dynamic"
-"easygoing"
-"emotional"
-"energetic"
-"enthusiastic"
-"exuberant"
-"fair-minded"
-"faithful"
-"fearless"
-"forceful"
-"frank"
-"friendly"
-"funny"
-"generous"
-"gentle"
-"good"
-"gregarious"
-"hard-working"
-"helpful"
-"honest"
-"humorous"
-"imaginative"
-"impartial"
-"independent"
-"intellectual"
-"intelligent"
-"intuitive"
-"inventive"
-"kind"
-"loving"
-"loyal"
-"modest"
-"neat"
-"nice"
-"optimistic"
-"passionate"
-"patient"
-"persistent"
-"pioneering"
-"philosophical"
-"placid"
-"plucky"
-"polite"
-"powerful"
-"practical"
-"pro-active"
-"quick-witted"
-"quiet"
-"rational"
-"reliable"
-"reserved"
-"resourceful"
-"romantic"
-"self-confident"
-"self-disciplined"
-"sensible"
-"sensitive"
-"shy"
-"sincere"
-"sociable"
-"straightforward"
-"sympathetic"
-"thoughtful"
-"tidy"
-"tough"
-"unassuming"
-"understanding"
-"versatile"
-"warmhearted"
-"willing"
-"witty"
-]
-
-negative_adjectives = [
-"aggressive"
-"aloof"
-"arrogant"
-"belligerent"
-"big-headed"
-"bitchy"
-"boastful"
-"bone-idle"
-"boring"
-"bossy"
-"callous"
-"cantankerous"
-"careless"
-"changeable"
-"clinging"
-"compulsive"
-"conservative"
-"cowardly"
-"cruel"
-"cunning"
-"cynical"
-"deceitful"
-"detached"
-"dishonest"
-"dogmatic"
-"domineering"
-"finicky"
-"flirtatious"
-"foolish"
-"foolhardy"
-"fussy"
-"greedy"
-"grumpy"
-"gullible"
-"harsh"
-"impatient"
-"impolite"
-"impulsive"
-"inconsiderate"
-"inconsistent"
-"indecisive"
-"indiscreet"
-"inflexible"
-"interfering"
-"intolerant"
-"irresponsible"
-"jealous"
-"lazy"
-"Machiavellian"
-"materialistic"
-"mean"
-"miserly"
-"moody"
-"narrow-minded"
-"nasty"
-"naughty"
-"nervous"
-"obsessive"
-"obstinate"
-"overcritical"
-"overemotional"
-"parsimonious"
-"patronizing"
-"perverse"
-"pessimistic"
-"pompous"
-"possessive"
-"pusillanimous"
-"quarrelsome"
-"quick-tempered"
-"resentful"
-"risky"
-"rude"
-"ruthless"
-"sarcastic"
-"secretive"
-"selfish"
-"self-centred"
-"self-indulgent"
-"silly"
-"sneaky"
-"stingy"
-"stubborn"
-"stupid"
-"superficial"
-"tactless"
-"timid"
-"touchy"
-"thoughtless"
-"truculent"
-"unkind"
-"unpredictable"
-"unreliable"
-"untidy"
-"untrustworthy"
-"vague"
-"vain"
-"vengeful"
-"vulgar"
-"weak-willed"
-"wrong"
-]
-
 def calc_find_weight(word):
     if (word.lower() in positive_adjectives):    
         print("Incrementing becasue of ")
@@ -246,12 +44,11 @@ def calc_find_weight(word):
 # Associate a negative weight if there are negative adjectives and some keyword shows up
 def calc_weight(keyword, tweet):
     run = 0
-    for i in tweet.split():
-        if keyword == i:
-            run = 1
-            break
-    if run == 1:
-        return (tweet, nltk.sentiment.util.demo_liu_hu_lexicon(tweet, false))
+    for i in tweet.text.split():
+        if not set(keyword).isdisjoint(tweet.text.split()):
+            print(tweet.text.split())
+            return (tweet.created_at, tweet.text, 
+                    nltk.sentiment.util.demo_liu_hu_lexicon(tweet.text))
     return 0
 
 # Calculates a frequency distribution of words
@@ -259,18 +56,24 @@ def calc_weight(keyword, tweet):
 def calc_word_dist(timeline, word):
     the_list = []
     for i in timeline:
-        the_list.append(calc_weight(word, i.text))
+        the_list.append(calc_weight(word, i))
     return the_list
 
 api = twitter.Api(consumer_key="EwIs54k4A8rqQh7ddwoxijmLo",
                   consumer_secret="2OwXKwDvs4gz3PgQ0ZREoRv67k9MCObOQAt9eoaCiDPsbNKVXX",
                   access_token_key="1096596922431930368-1GwsadoZjGEQ491BqnBEnEDFttDttc",
                   access_token_secret="Ym94MmzyvYsR5awSiH0WORAxtNwbAYpahWqF2k5HUOuaj")
+nltk.download('opinion_lexicon')
 
-nltk.download("maxent_treebank_pos_tagger")
+handle = input("Twitter Handle (without the @)")
+keyword_list = []
+while len(keyword_list) == 0 or keyword_list[len(keyword_list)-1] != "STOP":
+    keyword_list.append(input("Add a keyword (STOP to stop)"))
 
-trump_timeline = get_tweets(api, "business")
-the_list = calc_word_dist(trump_timeline, "a")
 
-for i in the_list:
-    print(i)
+the_list = calc_word_dist(get_tweets(api, handle), keyword_list)
+
+with open('filename.csv', 'wb') as myfile:
+    wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
+    wr.writerow(the_list)
+
