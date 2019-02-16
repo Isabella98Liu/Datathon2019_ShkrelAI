@@ -29,16 +29,42 @@ def get_tweets(api=None, screen_name=None):
 
     return timeline
 
-def calc_find_weight(word):
-    if (word.lower() in positive_adjectives):    
-        print("Incrementing becasue of ")
-        print(word.lower())
+def liu_hu_lexicon(sentence, plot=False):
+    """
+    Basic example of sentiment classification using Liu and Hu opinion lexicon.
+    This function simply counts the number of positive, negative and neutral words
+    in the sentence and classifies it depending on which polarity is more represented.
+    Words that do not appear in the lexicon are considered as neutral.
+    :param sentence: a sentence whose polarity has to be classified.
+    :param plot: if True, plot a visual representation of the sentence polarity.
+    """
+    from nltk.corpus import opinion_lexicon
+    from nltk.tokenize import treebank
+
+    tokenizer = treebank.TreebankWordTokenizer()
+    pos_words = 0
+    neg_words = 0
+    tokenized_sent = [word.lower() for word in tokenizer.tokenize(sentence)]
+
+    x = list(range(len(tokenized_sent)))  # x axis for the plot
+    y = []
+
+    for word in tokenized_sent:
+        if word in opinion_lexicon.positive():
+            pos_words += 1
+            y.append(1)  # positive
+        elif word in opinion_lexicon.negative():
+            neg_words += 1
+            y.append(-1)  # negative
+        else:
+            y.append(0)  # neutral
+
+    if pos_words > neg_words:
         return 1
-    if (word.lower() in negative_adjectives):
-        print("Decrementing because of ")
-        print(word.lower())
+    elif pos_words < neg_words:
         return -1
-    return 0
+    elif pos_words == neg_words:
+        return 0
 
 # Associate a positive weight if there are postitive adjectives and some keyword shows up
 # Associate a negative weight if there are negative adjectives and some keyword shows up
@@ -47,9 +73,8 @@ def calc_weight(keyword, tweet):
     for i in tweet.text.split():
         if not set(keyword).isdisjoint(tweet.text.split()):
             print(tweet.text.split())
-            return (tweet.created_at, tweet.text, 
-                    nltk.sentiment.util.demo_liu_hu_lexicon(tweet.text))
-    return 0
+            return (tweet.created_at, tweet.text, liu_hu_lexicon(tweet.text));
+    return (0, "", 0)
 
 # Calculates a frequency distribution of words
 # Associates a word distribution to each tweet, and maybe we can find statistical patterns within that?
@@ -73,7 +98,13 @@ while len(keyword_list) == 0 or keyword_list[len(keyword_list)-1] != "STOP":
 
 the_list = calc_word_dist(get_tweets(api, handle), keyword_list)
 
-with open('filename.csv', 'wb') as myfile:
-    wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
-    wr.writerow(the_list)
-
+with open('filename.csv', 'w+') as outfile:
+    for entries in the_list:
+        if entries[0] == 0:
+            continue
+        outfile.write("%s" % str(entries[0]));
+        outfile.write(",");
+        outfile.write("%s" % str(entries[1]));
+        outfile.write(",");
+        outfile.write("%s" % str(entries[2]));
+        outfile.write("\n");
