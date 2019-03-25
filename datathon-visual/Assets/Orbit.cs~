@@ -1,0 +1,24 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Orbit : MonoBehaviour
+{
+    private float xyPos;
+    public float rate;
+    public float radius;
+    public Vector3 origin;
+
+    // Start is called before the first frame update
+    void Start()
+    {
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        xyPos += Mathf.PI / 3.0f * rate * Time.deltaTime;
+        transform.position = new Vector3(origin.x + radius*Mathf.Cos(xyPos), transform.position.y + radius*Mathf.Sin(xyPos), origin.z);        
+    }
+}
